@@ -1,0 +1,12 @@
+.DS_Store
+/src/
+/mysql-data/
+/init-db/
+# Environments (보안 파일 Git 추적 제외)
+
+.env.dev
+.env.prod
+
+.idea
+.vscode
+config/pma-config/config.inc.php

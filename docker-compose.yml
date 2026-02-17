@@ -1,0 +1,60 @@
+services:
+  web:
+    build:
+      context: ./config/php-apache
+      target: development # <--- 개발용 스테이지 지점 활성화됨
+      args:
+        - USER_ID=${UID:-1000}
+        - GROUP_ID=${GID:-1000}
+      dockerfile: Dockerfile
+    container_name: apm-web
+    restart: unless-stopped
+    volumes:
+      - ./src:/var/www/html
+    environment:
+      TZ: Asia/Seoul
+    networks:                    # [수정] 네트워크 명시적 할당
+      - apm-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+
+  redis:
+    image: redis:7-alpine
+    container_name: apm-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    networks:                    # [수정] 네트워크 할당
+      - apm-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3" 
+
+
+
+  tunnel:
+    container_name: cloudflared
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CF_TUNNEL_TOKEN}
+    depends_on:
+      - web
+    networks:                    # [수정] 네트워크 할당
+      - apm-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+
+networks:
+  apm-network:
+    driver: bridge

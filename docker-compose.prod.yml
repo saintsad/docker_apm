@@ -1,0 +1,10 @@
+services:
+  web:
+    build:
+      target: production # <--- 운영용 스테이지 지점
+    #ports: #터널을 이용
+    #  - "80:80"
+    #  - "443:443"
+    restart: unless-stopped # 서버 재부팅 시 자동 실행
+    volumes:
+      - ./config/php-apache/prod.ini:/usr/local/etc/php/conf.d/custom.ini # 에러 표시를 끈 안전한 PHP 설정
