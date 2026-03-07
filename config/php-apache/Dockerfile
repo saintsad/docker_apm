@@ -18,6 +18,7 @@ RUN apt-get update && \
   libpng-dev \
   libjpeg-dev \
   libfreetype6-dev \
+  supervisor \
   && docker-php-ext-configure gd --with-freetype --with-jpeg \
   && docker-php-ext-install pdo pdo_mysql mysqli gd zip opcache \
   && pecl install redis \

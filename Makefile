@@ -33,7 +33,7 @@ build:
 
 # 웹 컨테이너 접속 (패키지 설치나 파일 권한 확인할 때 유용)
 shell-web:
-	docker exec -it apm-web bash
+	docker exec --user www-data -it apm-web bash
 
 # DB 컨테이너 접속 (직접 SQL 명령어를 쳐야 할 때 유용)
 shell-db:
