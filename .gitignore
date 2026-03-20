@@ -11,3 +11,4 @@
 .idea
 .vscode
 config/pma-config/config.inc.php
+Makefile

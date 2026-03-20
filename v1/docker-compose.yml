@@ -1,0 +1,87 @@
+services:
+  web:
+    build:
+      context: ./config/php-apache
+      target: development # <--- 개발용 스테이지 지점 활성화됨
+      args:
+        - USER_ID=${UID:-1000}
+        - GROUP_ID=${GID:-1000}
+      dockerfile: Dockerfile
+    container_name: apm-web
+    restart: unless-stopped
+    volumes:
+      - ./src:/var/www/html
+    environment:
+      TZ: Asia/Seoul
+    networks:                    # [수정] 네트워크 명시적 할당
+      - apm-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  worker:
+    build:
+      context: ./config/php-apache
+      target: development # 웹과 동일한 개발 환경 스테이지
+      args:
+        - USER_ID=${UID:-1000}
+        - GROUP_ID=${GID:-1000}
+      dockerfile: Dockerfile
+    container_name: apm-worker
+    restart: unless-stopped
+    # 웹 서버(Apache) 대신 Supervisor 데몬 관리자를 실행하도록 명령어 덮어쓰기
+    command: ["supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]
+    volumes:
+      # 1. 소스 코드는 웹과 완벽히 동일하게 마운트
+      - ./src:/var/www/html 
+      # 2. 방금 만든 Supervisor 설정 파일들 마운트
+      - ./config/worker/supervisord.conf:/etc/supervisor/supervisord.conf
+      - ./config/worker/conf.d:/etc/supervisor/conf.d
+    environment:
+      TZ: Asia/Seoul
+    networks:
+      - apm-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+        
+
+  redis:
+    image: redis:7-alpine
+    container_name: apm-redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    networks:                    # [수정] 네트워크 할당
+      - apm-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3" 
+
+
+
+  tunnel:
+    container_name: cloudflared
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CF_TUNNEL_TOKEN}
+    depends_on:
+      - web
+    networks:                    # [수정] 네트워크 할당
+      - apm-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+
+networks:
+  apm-network:
+    driver: bridge
