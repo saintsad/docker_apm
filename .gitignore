@@ -4,6 +4,7 @@
 /init-db/
 # Environments (보안 파일 Git 추적 제외)
 
+.env
 .env.dev
 .env.prod
 
