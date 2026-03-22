@@ -1,9 +1,10 @@
 .DS_Store
 /src/
+/node-src/
 /mysql-data/
 /init-db/
 # Environments (보안 파일 Git 추적 제외)
-
+/node_modules
 .env
 .env.dev
 .env.prod
@@ -11,4 +12,5 @@
 .idea
 .vscode
 config/pma-config/config.inc.php
+config/php-apache/custom.ini
 /Makefile

@@ -1,0 +1,65 @@
+services:
+  web:
+    ports:
+      - "${WEB_PORT}:80"
+    volumes:
+      - ./config/php-apache/dev.ini:/usr/local/etc/php/conf.d/custom.ini # 에러 표시가 켜진 PHP 설정
+
+ 
+
+  db:
+    image: mariadb:10.11
+    container_name: apm-db
+    restart: unless-stopped      # [수정] 누락된 재시작 정책 추가
+    ports:
+      - "3306:3306" # 로컬 DB 툴(Sequel Pro 등) 접속을 위해 포트 개방    
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./config/mysql/my.cnf:/etc/mysql/conf.d/custom.cnf
+      - ./init-db:/docker-entrypoint-initdb.d
+    networks:                    # [수정] 네트워크 할당
+      - apm-network
+    logging:                     # [수정] DB 로그 제한 추가 (매우 중요)
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+
+  phpmyadmin:
+    image: lscr.io/linuxserver/phpmyadmin:latest
+    container_name: apm-phpmyadmin
+    depends_on:
+      - db
+    restart: unless-stopped      # [수정] 재시작 정책 추가
+    environment:
+      PUID: 1000
+      PGID: 1000
+      PMA_HOST: db
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      PMA_ARBITRARY: 1
+      TZ: Asia/Seoul
+    ports:
+      - "8081:80" 
+    volumes:
+      - ./config/pma-config/config.inc.php:/config/phpmyadmin/config.inc.php
+    networks:                    # [수정] 네트워크 할당
+      - apm-network
+    logging:                     # [수정] 로그 제한 추가
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"      
+
+  tunnel:
+    depends_on:
+      - web
+      - phpmyadmin
